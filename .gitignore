@@ -1,7 +1,10 @@
 
 *.egg-info
 *.pyc
-
+*.ipynb
+/src/open_deep_research/multi_agent.ipynb
+/src/open_deep_research/graph.ipynb
+/src/open_deep_research/test_api.ipynb
 # Python
 __pycache__/
 *.py[cod]
