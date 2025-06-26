@@ -36,20 +36,36 @@ class WorkflowConfiguration:
     search_api: SearchAPI = SearchAPI.TAVILY
     search_api_config: Optional[Dict[str, Any]] = None
     process_search_results: Literal["summarize", "split_and_rerank"] | None = None
-    summarization_model_provider: str = "anthropic"
-    summarization_model: str = "claude-3-5-haiku-latest"
+    summarization_model_provider: str = "openai"
+    summarization_model: str = "deepseek-r1-250528"
     max_structured_output_retries: int = 3
     include_source_str: bool = False
     
     # Workflow-specific configuration
     number_of_queries: int = 2 # Number of search queries to generate per iteration
     max_search_depth: int = 2 # Maximum number of reflection + search iterations
-    planner_provider: str = "anthropic"
-    planner_model: str = "claude-3-7-sonnet-latest"
+    planner_provider: str = "openai"
+    planner_model: str = "deepseek-r1-250528"
     planner_model_kwargs: Optional[Dict[str, Any]] = None
-    writer_provider: str = "anthropic"
-    writer_model: str = "claude-3-7-sonnet-latest"
+    writer_provider: str = "openai"
+    writer_model: str = "deepseek-r1-250528"
     writer_model_kwargs: Optional[Dict[str, Any]] = None
+    
+    def __post_init__(self):
+        """Auto-configure model kwargs based on provider and model."""
+        # Auto-configure planner model kwargs
+        if self.planner_provider.lower() == "openai" and self.planner_model.startswith("deepseek"):
+            if self.planner_model_kwargs is None:
+                self.planner_model_kwargs = {}
+            if "base_url" not in self.planner_model_kwargs:
+                self.planner_model_kwargs["base_url"] = "https://ark.cn-beijing.volces.com/api/v3"
+        
+        # Auto-configure writer model kwargs
+        if self.writer_provider.lower() == "openai" and self.writer_model.startswith("deepseek"):
+            if self.writer_model_kwargs is None:
+                self.writer_model_kwargs = {}
+            if "base_url" not in self.writer_model_kwargs:
+                self.writer_model_kwargs["base_url"] = "https://ark.cn-beijing.volces.com/api/v3"
 
     @classmethod
     def from_runnable_config(
@@ -73,19 +89,51 @@ class MultiAgentConfiguration:
     search_api: SearchAPI = SearchAPI.TAVILY
     search_api_config: Optional[Dict[str, Any]] = None
     process_search_results: Literal["summarize", "split_and_rerank"] | None = None
-    summarization_model_provider: str = "anthropic"
-    summarization_model: str = "claude-3-5-haiku-latest"
+    summarization_model_provider: str = "openai"
+    summarization_model: str = "deepseek-r1-250528"
     include_source_str: bool = False
     
     # Multi-agent specific configuration
     number_of_queries: int = 2 # Number of search queries to generate per section
-    supervisor_model: str = "anthropic:claude-3-7-sonnet-latest"
-    researcher_model: str = "anthropic:claude-3-7-sonnet-latest"
+    supervisor_model: str = "openai:deepseek-r1-250528"
+    supervisor_model_kwargs: Optional[Dict[str, Any]] = None
+    researcher_model: str = "openai:deepseek-r1-250528"
+    researcher_model_kwargs: Optional[Dict[str, Any]] = None
     ask_for_clarification: bool = False # Whether to ask for clarification from the user
     # MCP server configuration
     mcp_server_config: Optional[Dict[str, Any]] = None
     mcp_prompt: Optional[str] = None
     mcp_tools_to_include: Optional[list[str]] = None
+    
+    def __post_init__(self):
+        """Auto-configure model kwargs based on provider and model."""
+        # Parse supervisor model (format: "provider:model" or just "model")
+        if ":" in self.supervisor_model:
+            supervisor_provider, supervisor_model_name = self.supervisor_model.split(":", 1)
+        else:
+            supervisor_provider = "openai"  # default
+            supervisor_model_name = self.supervisor_model
+            
+        # Auto-configure supervisor model kwargs
+        if supervisor_provider.lower() == "openai" and supervisor_model_name.startswith("deepseek"):
+            if self.supervisor_model_kwargs is None:
+                self.supervisor_model_kwargs = {}
+            if "base_url" not in self.supervisor_model_kwargs:
+                self.supervisor_model_kwargs["base_url"] = "https://ark.cn-beijing.volces.com/api/v3"
+        
+        # Parse researcher model (format: "provider:model" or just "model")
+        if ":" in self.researcher_model:
+            researcher_provider, researcher_model_name = self.researcher_model.split(":", 1)
+        else:
+            researcher_provider = "openai"  # default
+            researcher_model_name = self.researcher_model
+            
+        # Auto-configure researcher model kwargs
+        if researcher_provider.lower() == "openai" and researcher_model_name.startswith("deepseek"):
+            if self.researcher_model_kwargs is None:
+                self.researcher_model_kwargs = {}
+            if "base_url" not in self.researcher_model_kwargs:
+                self.researcher_model_kwargs["base_url"] = "https://ark.cn-beijing.volces.com/api/v3"
 
     @classmethod
     def from_runnable_config(

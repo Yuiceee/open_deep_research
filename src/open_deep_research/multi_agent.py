@@ -196,7 +196,8 @@ async def supervisor(state: ReportState, config: RunnableConfig):
     supervisor_model = get_config_value(configurable.supervisor_model)
 
     # Initialize the model
-    llm = init_chat_model(model=supervisor_model)
+    supervisor_kwargs = configurable.supervisor_model_kwargs or {}
+    llm = init_chat_model(model=supervisor_model, **supervisor_kwargs)
     
     # If sections have been completed, but we don't yet have the final report, then we need to initiate writing the introduction and conclusion
     if state.get("completed_sections") and not state.get("final_report"):
@@ -355,7 +356,8 @@ async def research_agent(state: SectionState, config: RunnableConfig):
     researcher_model = get_config_value(configurable.researcher_model)
     
     # Initialize the model
-    llm = init_chat_model(model=researcher_model)
+    researcher_kwargs = configurable.researcher_model_kwargs or {}
+    llm = init_chat_model(model=researcher_model, **researcher_kwargs)
 
     # Get tools based on configuration
     research_tool_list = await get_research_tools(config)

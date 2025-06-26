@@ -118,10 +118,13 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
     # Run the planner
     if planner_model == "claude-3-7-sonnet-latest":
         # Allocate a thinking budget for claude-3-7-sonnet-latest as the planner model
+        # Merge model_kwargs with thinking configuration
+        merged_kwargs = {**(planner_model_kwargs or {})}
         planner_llm = init_chat_model(model=planner_model, 
                                       model_provider=planner_provider, 
                                       max_tokens=20_000, 
-                                      thinking={"type": "enabled", "budget_tokens": 16_000})
+                                      thinking={"type": "enabled", "budget_tokens": 16_000},
+                                      model_kwargs=merged_kwargs)
 
     else:
         # With other models, thinking tokens are not specifically allocated
@@ -327,10 +330,13 @@ async def write_section(state: SectionState, config: RunnableConfig) -> Command[
 
     if planner_model == "claude-3-7-sonnet-latest":
         # Allocate a thinking budget for claude-3-7-sonnet-latest as the planner model
+        # Merge model_kwargs with thinking configuration
+        merged_kwargs = {**(planner_model_kwargs or {})}
         reflection_model = init_chat_model(model=planner_model, 
                                            model_provider=planner_provider, 
                                            max_tokens=20_000, 
-                                           thinking={"type": "enabled", "budget_tokens": 16_000}).with_structured_output(Feedback)
+                                           thinking={"type": "enabled", "budget_tokens": 16_000},
+                                           model_kwargs=merged_kwargs).with_structured_output(Feedback)
     else:
         reflection_model = init_chat_model(model=planner_model, 
                                            model_provider=planner_provider, model_kwargs=planner_model_kwargs).with_structured_output(Feedback)
