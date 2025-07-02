@@ -2,9 +2,9 @@
 *.egg-info
 *.pyc
 *.ipynb
-/src/open_deep_research/multi_agent.ipynb
-/src/open_deep_research/graph.ipynb
-/src/open_deep_research/test_api.ipynb
+
+/src/open_deep_research/tool/ligandmpnn/output/
+/src/open_deep_research/notebook/
 # /open_deep_research/src/open_deep_research/multi_agent.ipynb
 # Python
 __pycache__/
