@@ -58,7 +58,7 @@ async def clarify_with_user(state: ReportState, config: RunnableConfig):
     structured_llm = writer_model.with_structured_output(ClarifyWithUser)
     system_instructions = clarify_with_user_instructions.format(messages=get_buffer_string(messages))
     results = await structured_llm.ainvoke([SystemMessage(content=system_instructions),
-                                     HumanMessage(content="Generate search queries that will help with planning the sections of the report.")])
+                                    HumanMessage(content="Generate search queries that will help with planning the sections of the report.")])
     return {"messages": [AIMessage(content=results.question)], "already_clarified_topic": True}
 
 
