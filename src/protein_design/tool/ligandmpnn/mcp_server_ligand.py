@@ -4,6 +4,7 @@
 import os
 import json
 import subprocess
+import asyncio
 from typing import Dict, Any, List, Optional, Union, Literal
 from enum import Enum
 from mcp.server.fastmcp import FastMCP
@@ -11,6 +12,11 @@ from pydantic import BaseModel, Field
 
 # 初始化MCP服务器
 mcp = FastMCP("ligandmpnn_ligand_design")
+
+# 异步辅助函数：安全地创建目录
+async def ensure_directory_async(dir_path: str) -> None:
+    """异步创建目录，避免阻塞调用"""
+    await asyncio.to_thread(os.makedirs, dir_path, exist_ok=True)
 
 class LigandDesignComplexity(str, Enum):
     """配体结合蛋白质设计的复杂度等级"""
@@ -60,7 +66,7 @@ LIGAND_DESIGN_PRESETS = {
     }
 }
 
-def run_ligandmpnn_docker(
+async def run_ligandmpnn_docker(
     pdb_file: str,
     output_dir: str,
     model_type: str = "ligand_mpnn",
@@ -77,8 +83,8 @@ def run_ligandmpnn_docker(
     """
     使用Docker运行LigandMPNN
     """
-    # 确保输出目录存在
-    os.makedirs(output_dir, exist_ok=True)
+    # 确保输出目录存在 - 使用异步方式避免阻塞
+    await ensure_directory_async(output_dir)
     
     # 获取PDB文件名（无扩展名）
     pdb_name = os.path.splitext(os.path.basename(pdb_file))[0]
@@ -201,7 +207,7 @@ async def ligand_design_basic(
         
         config = LIGAND_DESIGN_PRESETS[LigandDesignComplexity.BASIC]
         
-        result = run_ligandmpnn_docker(
+        result = await run_ligandmpnn_docker(
             pdb_file=pdb_file,
             output_dir=output_dir,
             model_type=config["model_type"].value,
@@ -298,7 +304,7 @@ async def ligand_design_intermediate(
                 "message": "自定义温度必须在0.05-0.5之间"
             }, indent=2)
         
-        result = run_ligandmpnn_docker(
+        result = await run_ligandmpnn_docker(
             pdb_file=pdb_file,
             output_dir=output_dir,
             model_type=config["model_type"].value,
@@ -403,7 +409,7 @@ async def ligand_design_advanced(
         # 根据稀有氨基酸设置调整omit_AA
         omit_aa = "X" if include_rare_aa else config["omit_AA"]
         
-        result = run_ligandmpnn_docker(
+        result = await run_ligandmpnn_docker(
             pdb_file=pdb_file,
             output_dir=output_dir,
             model_type=config["model_type"].value,

@@ -14,3 +14,6 @@ index-url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 [dependencies]
 python = "3.12.*"
 pip = ">=25.1.1,<26"
+seaborn = ">=0.13.2,<0.14"
+numpy = "==2.2"
+freesasa-c = ">=2.1.2,<3"
