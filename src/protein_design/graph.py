@@ -376,7 +376,6 @@ async def optimization_node(state: ProteinDesignState, config: RunnableConfig):
                     "errors": ["复合物结构文件不存在"]
                 }
             
-            iteration_dir = os.path.dirname(complex_cif)
             pdb_prefix = os.path.join(iteration_dir, "complex")
             
             convert_result = await convert_cif_tool.ainvoke({
@@ -401,7 +400,7 @@ async def optimization_node(state: ProteinDesignState, config: RunnableConfig):
             pdb_file = convert_data["main_pdb"]
             
             # 运行LigandMPNN优化
-            output_dir = os.path.join(iteration_dir, "ligandmpnn_output")
+            output_dir = ligandmpnn_output_dir
             
             optimization_result = await ligand_basic_tool.ainvoke({
                 "pdb_file": pdb_file,
@@ -466,9 +465,42 @@ async def reporting_node(state: ProteinDesignState, config: RunnableConfig):
             model_kwargs=configuration.supervisor_model_kwargs or {}
         )
         
+        # 处理预测结果中的路径显示
+        processed_predictions = []
+        work_dir = state.get("work_dir", "")
+        
+        for pred in state.get("predictions", []):
+            processed_pred = pred.copy()
+            
+            # 处理受体结构路径
+            if pred.get("receptor_structure"):
+                full_path = pred["receptor_structure"]
+                if work_dir and full_path.startswith(work_dir):
+                    processed_pred["receptor_structure"] = full_path.replace(work_dir, "workspace")
+                else:
+                    processed_pred["receptor_structure"] = os.path.basename(full_path)
+            
+            # 处理配体结构路径
+            if pred.get("ligand_structure"):
+                full_path = pred["ligand_structure"]
+                if work_dir and full_path.startswith(work_dir):
+                    processed_pred["ligand_structure"] = full_path.replace(work_dir, "workspace")
+                else:
+                    processed_pred["ligand_structure"] = os.path.basename(full_path)
+            
+            # 处理复合物结构路径
+            if pred.get("complex_structure"):
+                full_path = pred["complex_structure"]
+                if work_dir and full_path.startswith(work_dir):
+                    processed_pred["complex_structure"] = full_path.replace(work_dir, "workspace")
+                else:
+                    processed_pred["complex_structure"] = os.path.basename(full_path)
+            
+            processed_predictions.append(processed_pred)
+        
         # 构建报告提示
         prompt = PROTEIN_DESIGN_REPORTER_INSTRUCTIONS.format(
-            predictions=state.get("predictions", []),
+            predictions=processed_predictions,
             scores=state.get("scores", []),
             optimizations=state.get("optimizations", []),
             today=get_today_str()
