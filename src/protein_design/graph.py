@@ -44,7 +44,7 @@ async def input_analysis_node(state: ProteinDesignState, config: RunnableConfig 
         current_sequence = state["single_sequence"]
     elif state.get("receptor_sequence") and state.get("ligand_sequence"):
         design_scenario = "ligand_optimization"
-        current_sequence = state["ligand_sequence"]  # 优化配体序列
+        current_sequence = state.get("ligand_sequence", "")  # 优化配体序列
     else:
         return {
             "current_step": "error",
@@ -74,15 +74,20 @@ async def input_analysis_node(state: ProteinDesignState, config: RunnableConfig 
 async def iteration_control_node(state: ProteinDesignState, config: RunnableConfig = None):
     """迭代控制节点 - 决定是否继续迭代"""
     
+    # 安全地获取状态字段，提供默认值
+    current_iteration = state.get("current_iteration", 0)
+    max_iterations = state.get("max_iterations", 3)  # 默认3次迭代
+    has_converged = state.get("has_converged", False)
+    
     # 检查是否达到最大迭代次数
-    if state["current_iteration"] >= state["max_iterations"]:
+    if current_iteration >= max_iterations:
         return {
             "current_step": "reporting",
             "completed_steps": ["iteration_control"]
         }
     
     # 检查是否收敛
-    if state["has_converged"]:
+    if has_converged:
         return {
             "current_step": "reporting",
             "completed_steps": ["iteration_control"]
@@ -125,16 +130,16 @@ async def prediction_node(state: ProteinDesignState, config: RunnableConfig):
         predictions = []
         
         # 使用新的工作目录管理系统创建目录结构
-        dirs = await create_directories_async(state["work_dir"], state["current_iteration"])
+        dirs = await create_directories_async(state.get("work_dir", create_session_directory()), state.get("current_iteration", 0))
         iteration_dir = dirs["iteration_dir"]
         input_files_dir = dirs["input_files_dir"]
         chaifold_output_dir = dirs["chaifold_output_dir"]
         
-        if state["design_scenario"] == "single_sequence":
+        if state.get("design_scenario", "single_sequence") == "single_sequence":
             # 单序列预测 - 创建FASTA文件
             fasta_file = os.path.join(input_files_dir, "input.fasta")
             fasta_result = await scoring_tool.ainvoke({
-                "sequences": [state["current_sequence"]],
+                "sequences": [state.get("current_sequence", "")],
                 "output_file": fasta_file,
                 "sequence_names": [f"protein|iter_{state['current_iteration']}"]
             })
@@ -161,10 +166,10 @@ async def prediction_node(state: ProteinDesignState, config: RunnableConfig):
             )
             predictions.append(prediction)
             
-        elif state["design_scenario"] == "ligand_optimization":
+        elif state.get("design_scenario", "single_sequence") == "ligand_optimization":
             # 配体优化 - 创建复合物FASTA文件
             fasta_file = os.path.join(input_files_dir, "complex.fasta")
-            sequences = [state["receptor_sequence"], state["current_sequence"]]
+            sequences = [state.get("receptor_sequence", ""), state.get("current_sequence", "")]
             sequence_names = ["receptor|A", "ligand|B"]
             
             fasta_result = await scoring_tool.ainvoke({
@@ -271,19 +276,19 @@ async def scoring_node(state: ProteinDesignState, config: RunnableConfig):
         # 计算当前迭代的最佳分数
         current_best_score = 0.0
         if scores:
-            if state["optimization_target"] == "binding_affinity":
+            if state.get("optimization_target", "enzyme_activity") == "binding_affinity":
                 current_best_score = max(scores, key=lambda x: x["binding_affinity"])["binding_affinity"]
-            elif state["optimization_target"] == "enzyme_activity":
+            elif state.get("optimization_target", "enzyme_activity") == "enzyme_activity":
                 current_best_score = max(scores, key=lambda x: x["structural_quality"])["structural_quality"]
         
         # 更新迭代状态
-        score_improvement = current_best_score - state["previous_score"]
-        has_converged = abs(score_improvement) < state["convergence_threshold"]
+        score_improvement = current_best_score - state.get("previous_score", float("-inf"))
+        has_converged = abs(score_improvement) < state.get("convergence_threshold", 0.01)
         
         # 记录迭代历史
         iteration_record = {
-            "iteration": state["current_iteration"],
-            "sequence": state["current_sequence"],
+            "iteration": state.get("current_iteration", 0),
+            "sequence": state.get("current_sequence", ""),
             "score": current_best_score,
             "improvement": score_improvement,
             "predictions": current_predictions,
@@ -292,16 +297,16 @@ async def scoring_node(state: ProteinDesignState, config: RunnableConfig):
         
         # 更新最佳结果
         best_complex = None
-        if current_best_score > state["best_score"]:
+        if current_best_score > state.get("best_score", float("-inf")):
             best_score = current_best_score
             best_prediction = current_predictions[0] if current_predictions else None
             best_complex = {
                 "prediction": best_prediction,
                 "score": scores[0] if scores else None,
-                "iteration": state["current_iteration"]
+                "iteration": state.get("current_iteration", 0)
             }
         else:
-            best_score = state["best_score"]
+            best_score = state.get("best_score", float("-inf"))
             best_complex = state.get("best_complex")
         
         return {
@@ -327,7 +332,7 @@ async def optimization_node(state: ProteinDesignState, config: RunnableConfig):
     
     try:
         # 获取目录信息
-        dirs = await create_directories_async(state["work_dir"], state["current_iteration"])
+        dirs = await create_directories_async(state.get("work_dir", create_session_directory()), state.get("current_iteration", 0))
         iteration_dir = dirs["iteration_dir"]
         ligandmpnn_output_dir = dirs["ligandmpnn_output_dir"]
         
@@ -355,17 +360,17 @@ async def optimization_node(state: ProteinDesignState, config: RunnableConfig):
         target_prediction = current_predictions[0]
         
         # 根据场景选择优化策略
-        if state["design_scenario"] == "single_sequence":
+        if state.get("design_scenario", "single_sequence") == "single_sequence":
             # 单序列优化场景暂时跳过LigandMPNN优化
             return {
                 "current_step": "iteration_control", 
                 "completed_steps": ["optimization"],
                 "optimizations": [],
-                "current_sequence": state["current_sequence"],  # 保持原序列
-                "current_iteration": state["current_iteration"] + 1
+                "current_sequence": state.get("current_sequence", ""),  # 保持原序列
+                "current_iteration": state.get("current_iteration", 0) + 1
             }
             
-        elif state["design_scenario"] == "ligand_optimization":
+        elif state.get("design_scenario", "single_sequence") == "ligand_optimization":
             # 配体优化 - 使用LigandMPNN
             
             # 首先转换CIF文件为PDB
@@ -423,13 +428,13 @@ async def optimization_node(state: ProteinDesignState, config: RunnableConfig):
                 }
             
             # 提取优化后的序列（这里简化处理，实际需要解析LigandMPNN输出）
-            new_sequence = state["current_sequence"]  # 暂时保持原序列
+            new_sequence = state.get("current_sequence", "")  # 暂时保持原序列
             
             optimization = OptimizationResult(
                 optimized_sequence=new_sequence,
                 optimization_type="ligand_binding",
                 improvement_score=0.0,  # 需要从LigandMPNN结果中提取
-                iteration_number=state["current_iteration"],
+                iteration_number=state.get("current_iteration", 0),
                 parent_prediction_id=target_prediction["prediction_id"]
             )
             
@@ -438,7 +443,7 @@ async def optimization_node(state: ProteinDesignState, config: RunnableConfig):
                 "completed_steps": ["optimization"],
                 "optimizations": [optimization],
                 "current_sequence": new_sequence,
-                "current_iteration": state["current_iteration"] + 1
+                "current_iteration": state.get("current_iteration", 0) + 1
             }
         
     except Exception as e:

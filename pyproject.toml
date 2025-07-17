@@ -37,6 +37,12 @@ dependencies = [
     "rich>=13.0.0",
     "langgraph-cli[inmem]>=0.3.1",
     "langsmith>=0.3.37",
+    "chai-lab==0.6.1",
+    "ipykernel>=6.29.5",
+    "freesasa>=2.2.1",
+    "mdanalysis>=2.9.0",
+    "fastapi>=0.116.1",
+    "websockets>=15.0.1",
 ]
 
 [project.optional-dependencies]

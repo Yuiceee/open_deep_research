@@ -41,7 +41,7 @@ class ProteinDesignConfiguration:
         # 设置默认MCP服务器配置
         if self.mcp_server_config is None:
             # 使用 pixi 环境中的 Python 路径
-            python_path = "/root/agent_project/open_deep_research/.pixi/envs/default/bin/python"
+            python_path = "/root/agent_project/open_deep_research/.venv/bin/python"
             self.mcp_server_config = {
                 "chaifold": {
                     "command": python_path,

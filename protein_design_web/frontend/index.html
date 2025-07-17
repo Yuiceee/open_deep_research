@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蛋白质设计工作流 - 完整版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: white;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workflow-area {
+            flex: 1;
+            background: white;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .header h1 {
+            color: #1890ff;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .btn {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #40a9ff;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn.secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .status-panel {
+            margin: 20px 0;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .status-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-item.info {
+            background: #e6f7ff;
+            color: #1890ff;
+            border: 1px solid #91d5ff;
+        }
+
+        .status-item.success {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .status-item.error {
+            background: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+
+        .status-item.running {
+            background: #fff7e6;
+            color: #fa8c16;
+            border: 1px solid #ffd591;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1890ff;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        #workflow-container {
+            flex: 1;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            margin: 20px;
+            min-height: 400px;
+        }
+
+        .results-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .results-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #1890ff;
+        }
+
+        .result-item h4 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .result-item p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e8e8e8;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .connection-status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .connection-status.connected {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .connection-status.disconnected {
+            background: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #1890ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .markdown-content {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3 {
+            color: #333;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .markdown-content h1 {
+            font-size: 24px;
+        }
+
+        .markdown-content h2 {
+            font-size: 20px;
+        }
+
+        .markdown-content h3 {
+            font-size: 16px;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .markdown-content li {
+            margin-bottom: 5px;
+        }
+
+        .markdown-content p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .markdown-content code {
+            background: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .markdown-content pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .example-btn {
+            padding: 5px 10px;
+            background: #f0f0f0;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .example-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .task-info {
+            background: #e6f7ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #91d5ff;
+        }
+
+        .task-info h4 {
+            color: #1890ff;
+            margin-bottom: 8px;
+        }
+
+        .task-info p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <h1>🧬 蛋白质设计</h1>
+                <p>基于LangGraph的迭代优化工作流</p>
+            </div>
+
+            <div class="connection-status" id="connection-status">
+                <div class="spinner"></div> 正在连接...
+            </div>
+
+            <div class="task-info" id="task-info" style="display: none;">
+                <h4>当前任务</h4>
+                <p id="task-id-display"></p>
+                <p id="task-status-display"></p>
+            </div>
+
+            <div class="input-section">
+                <h3>输入配置</h3>
+
+                <div class="form-group">
+                    <label for="sequence">蛋白质序列</label>
+                    <div class="example-buttons">
+                        <button class="example-btn" onclick="loadExample('short_enzyme')">短酶</button>
+                        <button class="example-btn" onclick="loadExample('membrane_protein')">膜蛋白</button>
+                        <button class="example-btn" onclick="loadExample('antibody_fragment')">抗体片段</button>
+                    </div>
+                    <textarea id="sequence" placeholder="请输入蛋白质序列或使用示例序列..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="design-type">设计类型</label>
+                    <select id="design-type">
+                        <option value="single">单序列优化</option>
+                        <option value="ligand">配体优化</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="max-iterations">最大迭代次数</label>
+                    <input type="number" id="max-iterations" value="3" min="1" max="10">
+                </div>
+
+                <div class="form-group">
+                    <label for="threshold">收敛阈值</label>
+                    <input type="number" id="threshold" value="0.01" step="0.001" min="0.001">
+                </div>
+
+                <button class="btn" id="start-workflow" onclick="startWorkflow()">开始工作流</button>
+                <button class="btn secondary" id="stop-workflow" onclick="stopWorkflow()" disabled>停止工作流</button>
+            </div>
+
+            <div class="status-panel" id="status-panel">
+                <h3>执行状态</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">0% - 等待开始</div>
+                <div id="status-messages"></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="workflow-area">
+                <div class="header">
+                    <h1>工作流可视化</h1>
+                    <p>实时显示蛋白质设计迭代过程</p>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('workflow')">工作流图</div>
+                    <div class="tab" onclick="switchTab('results')">结果报告</div>
+                </div>
+
+                <div class="tab-content active" id="workflow-tab">
+                    <div id="workflow-container"></div>
+                </div>
+
+                <div class="tab-content" id="results-tab">
+                    <div class="results-section">
+                        <h3>执行结果</h3>
+                        <div id="results-content">
+                            <p style="color: #666; text-align: center; margin-top: 50px;">
+                                工作流完成后将显示结果
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@logicflow/core@1.2.27/dist/logic-flow.umd.js"></script>
+    <script src="https://unpkg.com/@logicflow/extension@1.2.27/dist/logic-flow-extension.umd.js"></script>
+    <script src="/static/js/workflow-manager.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>

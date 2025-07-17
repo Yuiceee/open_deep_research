@@ -129,7 +129,7 @@ async def save_results_to_file(results: Dict[str, Any], filepath: str) -> None:
     """
     import asyncio
     
-    # 使用异步方式创建目录，避免阻塞调用
+
     await asyncio.to_thread(os.makedirs, os.path.dirname(filepath), exist_ok=True)
     
     # 使用异步方式写入文件

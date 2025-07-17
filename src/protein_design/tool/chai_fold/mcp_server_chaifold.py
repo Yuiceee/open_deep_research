@@ -3,7 +3,9 @@
 
 import os
 import json
+import sys
 import subprocess
+from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 # 初始化MCP服务器
@@ -39,11 +41,11 @@ async def run_chaifold(
         await asyncio.to_thread(os.makedirs, os.path.dirname(output_folder), exist_ok=True)
         
         # 构建命令
-        command = f"chai-lab fold {fasta_file} {output_folder}"
+        command = f"uv run chai-lab fold {fasta_file} {output_folder}"
         
         # 在pixi环境中执行命令
         env = os.environ.copy()
-        env['PATH'] = '/root/agent_project/open_deep_research/.pixi/envs/default/bin:' + env.get('PATH', '')
+        env['PATH'] = '/root/agent_project/open_deep_research/.venv/bin/python:' + env.get('PATH', '')
         
         result = subprocess.run(
             command,
