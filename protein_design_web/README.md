@@ -7,7 +7,8 @@ i# 蛋白质设计工作流 Web 应用
 ### 核心特性
 
 - ✅ **完整集成** - 与 `src/protein_design` 模块完美集成
-- ✅ **实时可视化** - LogicFlow 动态工作流图
+- ✅ **现代化前端** - 新增 Svelte + TypeScript + Svelte Flow 前端 ⭐
+- ✅ **实时可视化** - 动态工作流图和节点状态监控
 - ✅ **WebSocket通信** - 实时状态更新和进度跟踪
 - ✅ **RESTful API** - 标准的API接口
 - ✅ **错误处理** - 完整的错误处理和恢复机制
@@ -21,8 +22,9 @@ i# 蛋白质设计工作流 Web 应用
 - Pydantic - 数据验证
 - Uvicorn - ASGI服务器
 
-**前端 (原生JavaScript)**
-- LogicFlow - 工作流可视化
+**前端 (双版本支持)**
+- **原版**: LogicFlow + 原生JavaScript 
+- **新版**: Svelte + TypeScript + Svelte Flow ⭐
 - WebSocket - 实时通信
 - 现代HTML5/CSS3/ES6+
 
@@ -36,44 +38,74 @@ i# 蛋白质设计工作流 Web 应用
 ```
 protein_design_web/
 ├── backend/
-│   └── main.py                 # FastAPI后端服务器
-├── frontend/
-│   ├── index.html              # 主页面
+│   └── main.py                    # FastAPI后端服务器
+├── frontend/                      # 原始前端 (LogicFlow)
+│   ├── index.html                 # 主页面
 │   └── js/
-│       ├── main.js             # 主应用逻辑
-│       ├── api-client.js       # API客户端
-│       └── workflow-manager.js # 工作流可视化
-├── requirements.txt            # Python依赖
-├── start.sh                   # 启动脚本
-└── README.md                  # 项目说明
+│       ├── main.js                # 主应用逻辑
+│       ├── api-client.js          # API客户端
+│       └── workflow-manager.js    # 工作流可视化
+├── frontend_svelte/               # 新前端 (Svelte Flow) ⭐
+│   ├── src/
+│   │   ├── App.svelte             # 主应用组件
+│   │   ├── lib/
+│   │   │   ├── ProteinWorkflowViewer.svelte  # 工作流可视化
+│   │   │   ├── ControlPanel.svelte           # 控制面板
+│   │   │   ├── StatusPanel.svelte            # 状态监控
+│   │   │   ├── nodes/                        # 自定义节点
+│   │   │   └── stores/                       # 状态管理
+│   │   └── main.ts                # 入口文件
+│   ├── package.json               # 前端依赖
+│   ├── vite.config.ts            # Vite配置
+│   └── tsconfig.json             # TypeScript配置
+├── requirements.txt               # Python依赖
+├── start.sh                      # 原始启动脚本
+├── start_svelte.sh               # Svelte版启动脚本 ⭐
+├── stop.sh                       # 停止脚本 ⭐
+└── README.md                     # 项目说明
 ```
 
 ## 🚀 快速开始
 
-### 1. 环境要求
-
-- Python 3.8+
-- 已配置的 `src/protein_design` 模块
-- OpenAI API Key (可选)
-
-### 2. 安装启动
+### 方式一：运行 Svelte 现代化版本 (推荐) ⭐
 
 ```bash
-# 进入项目目录
+# 1. 进入项目目录
 cd protein_design_web
 
-# 给启动脚本添加执行权限
-chmod +x start.sh
+# 2. 启动服务 (自动安装依赖)
+./start_svelte.sh
 
-# 启动开发服务器
-./start.sh dev
+# 3. 访问应用
+# 现代化前端: http://localhost:5173
+# 后端API: http://localhost:8000
+
+# 4. 停止服务
+./stop.sh
 ```
 
-### 3. 访问应用
+### 方式二：运行原始版本
 
-- **Web界面**: http://localhost:8000
-- **API文档**: http://localhost:8000/docs
-- **健康检查**: http://localhost:8000/health
+```bash
+# 1. 进入项目目录
+cd protein_design_web
+
+# 2. 给启动脚本添加执行权限
+chmod +x start.sh
+
+# 3. 启动开发服务器
+./start.sh dev
+
+# 4. 访问应用
+# Web界面: http://localhost:8000
+```
+
+### 环境要求
+
+- Python 3.8+
+- Node.js 16+ (Svelte版本)
+- 已配置的 `src/protein_design` 模块
+- OpenAI API Key (可选)
 
 ## 📖 详细使用说明
 

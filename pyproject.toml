@@ -53,10 +53,9 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["open_deep_research", "protein_design", "tests"]
+packages = [ "protein_design", "tests"]
 
 [tool.setuptools.package-dir]
-"open_deep_research" = "src/open_deep_research"
 "protein_design" = "src/protein_design"
 "tests" = "tests"
 

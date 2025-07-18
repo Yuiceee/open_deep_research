@@ -336,6 +336,27 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     finally:
         await task_manager.unregister_websocket(task_id)
 
+@app.websocket("/ws/general")
+async def general_websocket_endpoint(websocket: WebSocket):
+    """通用WebSocket端点，用于无特定任务的连接"""
+    await websocket.accept()
+    
+    try:
+        # 保持连接
+        while True:
+            try:
+                message = await websocket.receive_text()
+                # 处理通用消息
+                await websocket.send_json({
+                    "type": "pong",
+                    "message": "Connected to general endpoint"
+                })
+            except WebSocketDisconnect:
+                break
+                
+    except Exception as e:
+        print(f"General WebSocket error: {e}")
+
 # 健康检查端点
 @app.get("/health")
 async def health_check():

@@ -5,6 +5,7 @@
 
 /src/open_deep_research/tool/ligandmpnn/output/
 /src/open_deep_research/notebook/
+/data/
 # /open_deep_research/src/open_deep_research/multi_agent.ipynb
 # Python
 __pycache__/
